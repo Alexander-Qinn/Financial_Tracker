@@ -1,0 +1,77 @@
+---
+description: Visual design, layout, and fintech UI consistency
+globs: frontend/components/**,frontend/app/**,frontend/styles/**
+alwaysApply: false
+---
+
+# UI design rules
+
+## Fintech aesthetic
+
+- Calm, trustworthy, minimal — not flashy or gamified
+- Generous whitespace; avoid cramming data
+- Muted color palette with one accent color for primary actions
+- Numbers are the hero — typography should make amounts scannable
+- No gradients, glow effects, or heavy shadows unless explicitly requested
+
+## Typography
+
+- Page titles: `text-2xl font-semibold tracking-tight`
+- Section headings: `text-lg font-medium`
+- Body: `text-sm` (default shadcn scale)
+- Monetary amounts: `font-mono tabular-nums` for alignment in tables
+- Secondary/meta text: `text-muted-foreground text-xs`
+- Negative amounts (expenses): subtle red in light mode, muted red in dark mode
+- Positive amounts (income): subtle green — use sparingly, not for every positive number
+
+## Card layouts
+
+- Summary KPI cards: label on top, large number below, optional trend indicator
+- Use shadcn `Card` with consistent padding (`p-6`)
+- Grid: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4` for dashboard KPIs
+- No nested cards — flatten hierarchy with spacing instead
+
+## Table spacing
+
+- Row height: comfortable (`py-3` minimum)
+- Column padding: `px-4`
+- Right-align numeric columns; left-align text columns
+- Zebra striping optional — prefer subtle row hover instead
+- Action buttons in the last column, right-aligned, icon-only with tooltips
+
+## Dashboard hierarchy
+
+1. Page title + date range + primary action (top bar)
+2. KPI summary cards (net worth, cash flow, spending, income)
+3. Charts (spending by category, trend over time)
+4. Detail tables (recent transactions, upcoming recurring)
+
+Each level separated by `space-y-6` or `gap-6`.
+
+## Color usage
+
+- Primary action: accent color (one per theme)
+- Destructive: red for delete/remove only
+- Status indicators: muted badges — `default`, `secondary`, `outline` variants
+- Charts: max 6–8 distinct colors; use a fixed palette for category consistency
+- Do not use color alone to convey meaning — always pair with label or icon
+
+## Dark mode
+
+- All new components must work in both light and dark mode
+- Use CSS variables from shadcn theme (`bg-background`, `text-foreground`, `border-border`)
+- Test contrast in both modes before shipping
+- Charts: use theme-aware colors, not hardcoded hex values
+- Avoid pure black backgrounds — use `bg-background` token
+
+## Icons and density
+
+- Use lucide-react icons consistently
+- Icon size: `h-4 w-4` inline, `h-5 w-5` in buttons
+- Power-user density: support a compact table view option in the future — default to comfortable spacing now
+
+## Motion
+
+- Minimal animation — subtle transitions on hover/focus only
+- No animated number counters or confetti
+- Page transitions: none (App Router default)

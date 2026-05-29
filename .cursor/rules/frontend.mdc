@@ -1,0 +1,77 @@
+---
+description: Frontend architecture, components, and interaction patterns
+globs: frontend/**
+alwaysApply: false
+---
+
+# Frontend rules
+
+## Component organization
+
+- **Pages** (`app/`): Thin route shells — fetch data, compose layout, delegate to components
+- **Domain components** (`components/{domain}/`): Feature-specific UI (dashboard, transactions, accounts)
+- **Shared UI** (`components/ui/`): shadcn/ui primitives — never put business logic here
+- **Layout** (`components/layout/`): Shell, sidebar, nav, page headers
+- **Forms** (`components/forms/`): Reusable form fields and form wrappers
+
+### Size and composition
+
+- Split components exceeding ~200 lines
+- Prefer composition over inheritance
+- Extract hooks when logic is reused or a component handles both data and heavy UI
+- One component per file; co-locate small sub-components only when truly private
+
+## State management
+
+- **Server state:** Fetch in pages or hooks; prefer server components where possible
+- **Client state:** `store/` for global UI state (sidebar, filters, preferences)
+- **Form state:** Local component state or react-hook-form — do not lift to global store
+- **URL state:** Filters, pagination, and date ranges belong in search params when shareable
+
+## API integration
+
+- All HTTP calls go through `lib/api/` modules grouped by domain
+- Never call `fetch` directly from components
+- Types for API responses live in `types/` or alongside the API module
+- Handle loading, empty, and error states explicitly in every data view
+
+## Form handling
+
+- Validation schemas in `lib/validations/` — shared between client preview and API shape
+- Use react-hook-form + zod for interactive forms
+- Optimize for keyboard: Tab order, Enter to submit, Escape to cancel
+- Inline validation on blur; block submit until valid
+- Transaction entry forms: amount → account → category → note (minimal fields first)
+
+## Table patterns
+
+- Consistent column alignment: text left, numbers right, dates center or left
+- Sticky header on scrollable tables
+- Row actions via icon buttons or right-click context — avoid action columns wider than needed
+- Sortable columns where data is tabular; default sort by date descending for transactions
+- Empty state with a clear call to action (e.g. "Add your first transaction")
+- Pagination or virtual scroll for lists exceeding ~50 rows
+
+## Dashboard consistency
+
+- Page header: title, date range selector, primary action button
+- Summary cards in a grid — 2–4 KPIs above the fold
+- Charts below cards; tables below charts
+- Use the same date range across all dashboard widgets on a page
+- Loading skeletons matching final layout dimensions
+
+## Accessibility
+
+- All interactive elements keyboard reachable
+- Visible focus rings (do not remove outline without replacement)
+- Form inputs associated with labels (`htmlFor` / `aria-labelledby`)
+- Icon-only buttons require `aria-label`
+- Color is never the sole indicator of state — pair with text or icons
+- Minimum contrast ratios per WCAG AA
+
+## Styling
+
+- shadcn/ui + Tailwind utilities only
+- No deeply nested CSS or styled-components
+- Use `cn()` for conditional classes
+- Support dark mode via Tailwind `dark:` variants on all new components

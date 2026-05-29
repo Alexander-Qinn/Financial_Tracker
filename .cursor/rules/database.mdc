@@ -1,0 +1,74 @@
+---
+description: Database modeling, naming, and consistency rules
+globs: backend/app/models/**,backend/alembic/**,backend/app/repositories/**
+alwaysApply: false
+---
+
+# Database rules
+
+## Naming conventions
+
+- Tables: plural snake_case (`accounts`, `transactions`, `recurring_rules`)
+- Columns: snake_case (`account_id`, `created_at`, `transaction_type`)
+- Primary keys: `id` (UUID)
+- Foreign keys: `{referenced_table_singular}_id` (e.g. `account_id`)
+- Join tables: `{table_a}_{table_b}` alphabetically (`category_tags`)
+- Indexes: `ix_{table}_{column(s)}`
+- Enums stored as PostgreSQL enums or constrained strings — be consistent per column
+
+## Standard columns
+
+Every table includes:
+
+```python
+id: UUID          # primary key, default uuid4
+created_at: datetime   # server default now()
+updated_at: datetime   # on update now()
+```
+
+Use soft deletes (`deleted_at`) only when recovery is a product requirement — default to hard delete or immutable history.
+
+## Relationship patterns
+
+- Account → Transactions: one-to-many
+- Transaction → Category: many-to-one (nullable)
+- Transaction → Tags: many-to-many via join table
+- Recurring rule → Account: many-to-one
+- Transfers: two transaction rows linked by `transfer_group_id` (UUID shared between legs)
+
+## Indexing strategy
+
+- Index all foreign keys
+- Composite index on `(account_id, date DESC)` for transaction queries
+- Index `transaction_type` if filtered frequently
+- Index `recurring_rules.next_run_date` for scheduler queries
+- Avoid over-indexing low-cardinality columns alone
+
+## Transaction consistency rules
+
+- Account balance is **derived** from transactions — do not maintain a separate balance column without a reconciliation mechanism
+- Transfer pairs share a `transfer_group_id`; both legs must exist
+- Amount sign convention: expenses negative, income positive, or use explicit `transaction_type` with absolute amounts — pick one and stay consistent
+- Credit card accounts: charges are expenses on the card account; payments are transfers from checking to card
+- Never delete a transaction that is part of a transfer pair without deleting both legs
+
+## Audit and history philosophy
+
+- Prefer immutable transaction records
+- Edits create adjustment entries or new versions — do not silently mutate historical rows
+- `created_at` is set once; `updated_at` changes only for metadata edits (notes, category), not amount/date
+- Amount or date changes on posted transactions should be logged (audit table or event log)
+
+## Migration rules
+
+- Use Alembic for all schema changes
+- One migration per logical change
+- When deleting a migration, downgrade first then delete
+- Never edit a migration that has been applied to a shared environment
+
+## Data types
+
+- Money: `Numeric(precision=19, scale=4)` — never float
+- IDs: UUID (`uuid` type in PostgreSQL)
+- Dates: `Date` for transaction dates, `DateTime(timezone=True)` for timestamps
+- Text fields: reasonable `VARCHAR` limits; use `Text` for notes

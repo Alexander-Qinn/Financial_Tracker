@@ -1,0 +1,16 @@
+---
+description: Financial OS project conventions
+globs:
+alwaysApply: true
+---
+
+# Financial OS
+
+- Manual-first personal finance platform — see `AGENTS.md` for full guidance
+- Monorepo: `frontend/` (Next.js) + `backend/` (FastAPI)
+- All backend routes use the `/api` prefix
+- Business logic in `services/`, database access in `repositories/`
+- Run Python commands with `uv` from `backend/`
+- Keep imports at the top of files; no inline imports
+- Use shadcn/ui + Tailwind; support dark mode
+- Credit card payments are transfers, not expenses

@@ -1,0 +1,83 @@
+---
+description: Financial and accounting business logic rules
+globs: backend/app/services/**,backend/app/schemas/**,backend/app/models/**,frontend/lib/**,frontend/components/**
+alwaysApply: false
+---
+
+# Financial domain rules
+
+## Expenses vs transfers
+
+| Type | Definition | Affects net worth? | Example |
+|------|-----------|-------------------|---------|
+| **Expense** | Money spent from an account | Yes (decreases) | Groceries from checking |
+| **Income** | Money received into an account | Yes (increases) | Salary deposit |
+| **Transfer** | Money moved between owned accounts | No | Checking → savings |
+
+**Critical:** A credit card payment is a **transfer** (checking → credit card), NOT an expense. The expense was recorded when the purchase was charged to the card.
+
+## Credit card accounting
+
+- Credit card accounts represent **liabilities** — a positive balance means you owe money
+- Purchases on a credit card are **expenses** on the card account (increases liability)
+- Payments to a credit card are **transfers** from a cash account to the card (decreases liability)
+- Interest charges are **expenses** on the card account
+- Credit limit is informational metadata — not used in balance calculations
+
+## Account balance rules
+
+- Balance = sum of all transaction amounts for that account
+- Sign convention must be consistent across the codebase (document in one place)
+- Credit card: charges increase the owed amount; payments decrease it
+- Do not allow a transfer that would overdraw an account without explicit warning
+- Account types: `checking`, `savings`, `credit_card`, `cash`, `investment`, `other`
+
+## Recurring transaction generation
+
+- A recurring rule defines: account, amount, type, category, frequency, next run date
+- On generation: create a normal transaction linked back to the rule via `recurring_rule_id`
+- Generated transactions are independent — editing one does not alter the rule or future instances
+- Missed runs: generate on next check or skip — never backfill silently without user awareness
+- Frequencies: daily, weekly, biweekly, monthly, quarterly, yearly
+
+## Forecasting assumptions
+
+- Forecasts are **projections**, never presented as fact
+- Base case: extend recurring rules forward + recent average for variable categories
+- Always label forecast UI with "Projected" or similar
+- Do not forecast beyond 12 months without explicit user request
+- Account for known recurring items first; fill gaps with historical averages
+
+## Net worth calculation
+
+```
+Net worth = Σ (account balance × account type sign)
+```
+
+- Asset accounts (checking, savings, cash, investment): positive contribution
+- Liability accounts (credit_card): negative contribution (balance owed subtracts from net worth)
+- Transfers do not affect net worth
+- Calculate at a point in time using all transactions up to that date
+
+## Cash flow definitions
+
+- **Cash flow** = total income − total expenses over a period
+- Transfers are **excluded** from cash flow (they move money, not create/spend it)
+- Credit card purchases count as expenses in the period they occur (accrual), not when the card is paid
+- Group by category for spending breakdowns
+- Income and expense reports use the transaction date, not the entry date
+
+## Category and tagging
+
+- Categories apply to expenses and income, not transfers
+- A transaction has one primary category (nullable for transfers)
+- Tags are optional, many-to-many, for cross-cutting labels ("vacation", "tax-deductible")
+- Uncategorized transactions should be visible in a dedicated "needs review" view
+
+## Data integrity invariants
+
+- Every transaction has exactly one `account_id`
+- Transfer pairs share a `transfer_group_id` and have exactly two legs
+- Amounts use decimal arithmetic — never floating point
+- Deleting an account requires handling or reassigning its transactions first
+- Historical reports must not change retroactively when a category is renamed

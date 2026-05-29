@@ -1,0 +1,34 @@
+---
+description: Keep README setup instructions in sync with local dev changes
+globs: README.md,scripts/**,docker-compose.yml,docker/**,backend/requirements.txt,backend/.env.example,frontend/package.json,frontend/.env.local.example
+alwaysApply: true
+---
+
+# README setup maintenance
+
+When you change anything that affects local development, **update `README.md` in the same change**.
+
+## Update README when changing
+
+- `scripts/dev.sh`, `scripts/stop.sh`, or new setup scripts
+- Prerequisites (Node, Python, uv, Docker versions or tools)
+- Environment variables (`.env.example`, `.env.local.example`)
+- Ports or service URLs
+- `docker-compose.yml` or Dockerfiles
+- Install commands (`package.json`, `requirements.txt`)
+- First-run or migration steps
+
+## README must include
+
+1. **Quick start** — `./scripts/dev.sh` as the primary path
+2. **Prerequisites** — exact tools and versions
+3. **Local URLs** — frontend, backend, API docs, health check
+4. **Manual setup** — fallback if the script cannot be used
+5. **Stopping services** — `./scripts/stop.sh` and Ctrl+C behavior
+6. **Troubleshooting** — common failures (Docker not running, port in use, missing uv)
+
+## Do not
+
+- Leave README setup steps stale after changing scripts or env config
+- Document secrets in README — reference `.env.example` files instead
+- Remove manual setup until the script fully replaces it
