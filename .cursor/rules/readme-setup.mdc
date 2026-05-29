@@ -1,6 +1,6 @@
 ---
 description: Keep README setup instructions in sync with local dev changes
-globs: README.md,scripts/**,docker-compose.yml,docker/**,backend/requirements.txt,backend/.env.example,frontend/package.json,frontend/.env.local.example
+globs: README.md,scripts/**,docker-compose.yml,docker/**,backend/requirements.txt,backend/.env.example,frontend/package.json,frontend/.env.local.example,supabase/**
 alwaysApply: true
 ---
 

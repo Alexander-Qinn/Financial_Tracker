@@ -7,19 +7,13 @@ cd "$ROOT"
 log() { printf '==> %s\n' "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
-resolve_docker_compose() {
-  if docker compose version >/dev/null 2>&1; then
-    DOCKER_COMPOSE=(docker compose)
-  elif command -v docker-compose >/dev/null 2>&1; then
-    DOCKER_COMPOSE=(docker-compose)
-  else
-    die "Docker Compose is not available"
-  fi
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
 }
 
-resolve_docker_compose
+require_cmd supabase
 
-log "Stopping Postgres container"
-"${DOCKER_COMPOSE[@]}" stop db
+log "Stopping Supabase"
+supabase stop
 
-log "Stopped. To remove the Postgres volume as well, run: ${DOCKER_COMPOSE[*]} down -v"
+log "Stopped. To reset local data, run: supabase db reset"

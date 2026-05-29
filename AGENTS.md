@@ -43,7 +43,7 @@ This application is a manual-first financial operating system. The platform prio
 ### Stack
 
 - **Frontend:** Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui
-- **Backend:** FastAPI, SQLAlchemy, Alembic, Pydantic
+- **Backend:** FastAPI, SQLAlchemy, Pydantic, Supabase migrations
 - **Database:** PostgreSQL
 
 ### Layering
@@ -147,6 +147,8 @@ frontend/
 - Avoid business logic in routes
 - Use `logger.exception` instead of `logger.error` or `logger.warn`
 - Run Python commands with `uv` from `backend/`
+- Auth: Supabase handles credentials on the frontend; backend validates Supabase JWTs via `SUPABASE_JWT_SECRET`
+- Profile data lives in `public.profiles` (one row per user, unique email)
 
 ### Database
 
@@ -176,11 +178,14 @@ docker/     Container definitions
 ## Common commands
 
 ```bash
-# Full local stack (Postgres + backend + frontend)
+# Full local stack (Supabase + backend + frontend)
 ./scripts/dev.sh
 
-# Stop Postgres container
+# Stop Supabase local stack
 ./scripts/stop.sh
+
+# Sync env files from running Supabase instance
+./scripts/sync-supabase-env.sh
 
 # Backend only
 cd backend && uv run uvicorn app.main:app --reload
@@ -188,8 +193,9 @@ cd backend && uv run uvicorn app.main:app --reload
 # Frontend only
 cd frontend && npm run dev
 
-# Database migrations
-cd backend && uv run alembic upgrade head
+# Database migrations (Supabase)
+supabase migration new my_change
+supabase db reset   # local: apply all migrations fresh
 ```
 
 ## Related rule files
