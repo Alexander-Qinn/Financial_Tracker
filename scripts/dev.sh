@@ -11,55 +11,33 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
 }
 
-resolve_docker_compose() {
-  if docker compose version >/dev/null 2>&1; then
-    DOCKER_COMPOSE=(docker compose)
-  elif command -v docker-compose >/dev/null 2>&1; then
-    DOCKER_COMPOSE=(docker-compose)
-  else
-    die "Docker Compose is not available (install Docker Desktop and open the app)"
-  fi
-}
-
-require_docker_daemon() {
-  if ! docker info >/dev/null 2>&1; then
-    die "Docker is installed but not running — open Docker Desktop from Applications and wait until it is ready"
-  fi
-}
-
-wait_for_postgres() {
-  log "Waiting for Postgres..."
-  for _ in $(seq 1 30); do
-    if "${DOCKER_COMPOSE[@]}" exec -T db pg_isready -U postgres -d financial_os >/dev/null 2>&1; then
-      log "Postgres is ready"
+wait_for_supabase() {
+  log "Waiting for Supabase..."
+  for _ in $(seq 1 60); do
+    if supabase status >/dev/null 2>&1; then
+      log "Supabase is ready"
       return 0
     fi
-    sleep 1
+    sleep 2
   done
-  die "Postgres did not become ready in time"
+  die "Supabase did not become ready in time"
 }
 
 log "Checking prerequisites"
-require_cmd docker
+require_cmd supabase
 require_cmd node
 require_cmd npm
 require_cmd uv
-resolve_docker_compose
-require_docker_daemon
 
-log "Starting Postgres (Docker)"
-"${DOCKER_COMPOSE[@]}" up db -d
-wait_for_postgres
-
-if [[ ! -f backend/.env ]]; then
-  log "Creating backend/.env from .env.example"
-  cp backend/.env.example backend/.env
+if ! supabase status >/dev/null 2>&1; then
+  log "Starting Supabase (Postgres + Auth)"
+  supabase start
 fi
+wait_for_supabase
 
-if [[ ! -f frontend/.env.local ]]; then
-  log "Creating frontend/.env.local from .env.local.example"
-  cp frontend/.env.local.example frontend/.env.local
-fi
+log "Syncing environment from Supabase"
+chmod +x scripts/sync-supabase-env.sh
+./scripts/sync-supabase-env.sh
 
 log "Setting up backend"
 (
@@ -101,7 +79,8 @@ FRONTEND_PID=$!
 log "Financial OS is running (hot reload enabled)"
 log "  Frontend: http://localhost:3000  (Next.js Fast Refresh)"
 log "  Backend:  http://localhost:8000  (Uvicorn --reload)"
+log "  Supabase Studio: http://127.0.0.1:54323"
 log "  API docs: http://localhost:8000/docs"
-log "Press Ctrl+C to stop frontend and backend (Postgres keeps running)"
+log "Press Ctrl+C to stop frontend and backend (Supabase keeps running)"
 
 wait "$BACKEND_PID" "$FRONTEND_PID"

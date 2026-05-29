@@ -18,6 +18,9 @@ jobs:
       - run: uv venv
       - run: uv pip install -r requirements.txt
       - run: uv run python -m compileall app
+      - run: uv run pytest
+        env:
+          SUPABASE_JWT_SECRET: test-secret
 
   frontend:
     runs-on: ubuntu-latest

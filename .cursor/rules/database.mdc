@@ -1,6 +1,6 @@
 ---
 description: Database modeling, naming, and consistency rules
-globs: backend/app/models/**,backend/alembic/**,backend/app/repositories/**
+globs: backend/app/models/**,supabase/migrations/**,backend/app/repositories/**
 alwaysApply: false
 ---
 
@@ -61,10 +61,10 @@ Use soft deletes (`deleted_at`) only when recovery is a product requirement — 
 
 ## Migration rules
 
-- Use Alembic for all schema changes
+- Use **Supabase migrations** in `supabase/migrations/` for all schema changes
 - One migration per logical change
-- When deleting a migration, downgrade first then delete
-- Never edit a migration that has been applied to a shared environment
+- Local apply: `supabase db reset` or `supabase migration up`
+- When deleting a migration locally, reset the database first if it was already applied
 
 ## Data types
 
