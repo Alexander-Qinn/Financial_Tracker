@@ -7,9 +7,7 @@ const PROTECTED_PREFIXES = [
   "/accounts",
   "/transactions",
   "/recurring",
-  "/analytics",
   "/cards",
-  "/settings",
 ];
 
 function isAuthRoute(pathname: string) {
