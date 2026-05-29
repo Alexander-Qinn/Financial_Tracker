@@ -78,7 +78,7 @@ Install these before running the project:
 | **Node.js** | 22+ | [nodejs.org](https://nodejs.org/) |
 | **uv** | Latest | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
-Docker must be running — the local setup uses Docker for Postgres.
+Docker must be running — open **Docker Desktop** from Applications and wait until the menu bar whale icon is ready. The startup script supports both `docker compose` and `docker-compose`.
 
 ### Quick start
 
@@ -94,7 +94,20 @@ The script will:
 1. Start Postgres via Docker Compose
 2. Create `backend/.env` and `frontend/.env.local` from examples (if missing)
 3. Install backend (uv) and frontend (npm) dependencies
-4. Start the FastAPI backend and Next.js frontend
+4. Start the FastAPI backend and Next.js frontend with **hot reload enabled**
+
+### Hot reload
+
+Both servers auto-reload when you save files — no manual restart needed.
+
+| Layer | Command | What reloads |
+|-------|---------|--------------|
+| **Frontend** | `next dev --turbopack` | React components, pages, styles (Fast Refresh) |
+| **Backend** | `uvicorn --reload --reload-dir app` | Python files under `backend/app/` |
+
+Edit a page in `frontend/app/` and the browser updates instantly. Edit a route or service in `backend/app/` and Uvicorn restarts the API process automatically.
+
+Hot reload applies when using `./scripts/dev.sh` or the manual setup below. The Docker backend/frontend images are for deployment only — use the startup script for local development.
 
 ### Local URLs
 
@@ -157,7 +170,8 @@ npm run dev
 
 | Problem | Fix |
 |---------|-----|
-| `Missing required command: docker` | Install Docker Desktop and ensure it is running |
+| `Missing required command: docker` | Install Docker Desktop and open the app |
+| Docker installed but script fails | Open Docker Desktop and wait until it is fully started |
 | `Missing required command: uv` | Install uv: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 | Port 3000 or 8000 already in use | Stop the other process or change the port in the dev command |
 | Postgres not ready | Wait a few seconds and re-run `./scripts/dev.sh`, or run `docker compose logs db` |
