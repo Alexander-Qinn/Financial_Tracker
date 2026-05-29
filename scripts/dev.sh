@@ -11,10 +11,26 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
 }
 
+resolve_docker_compose() {
+  if docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE=(docker compose)
+  elif command -v docker-compose >/dev/null 2>&1; then
+    DOCKER_COMPOSE=(docker-compose)
+  else
+    die "Docker Compose is not available (install Docker Desktop and open the app)"
+  fi
+}
+
+require_docker_daemon() {
+  if ! docker info >/dev/null 2>&1; then
+    die "Docker is installed but not running — open Docker Desktop from Applications and wait until it is ready"
+  fi
+}
+
 wait_for_postgres() {
   log "Waiting for Postgres..."
   for _ in $(seq 1 30); do
-    if docker compose exec -T db pg_isready -U postgres -d financial_os >/dev/null 2>&1; then
+    if "${DOCKER_COMPOSE[@]}" exec -T db pg_isready -U postgres -d financial_os >/dev/null 2>&1; then
       log "Postgres is ready"
       return 0
     fi
@@ -28,10 +44,11 @@ require_cmd docker
 require_cmd node
 require_cmd npm
 require_cmd uv
-docker compose version >/dev/null 2>&1 || die "Docker Compose is not available"
+resolve_docker_compose
+require_docker_daemon
 
 log "Starting Postgres (Docker)"
-docker compose up db -d
+"${DOCKER_COMPOSE[@]}" up db -d
 wait_for_postgres
 
 if [[ ! -f backend/.env ]]; then
@@ -70,7 +87,7 @@ trap cleanup EXIT INT TERM
 log "Starting backend on http://localhost:8000"
 (
   cd backend
-  uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+  uv run uvicorn app.main:app --reload --reload-dir app --host 0.0.0.0 --port 8000
 ) &
 BACKEND_PID=$!
 
@@ -81,9 +98,9 @@ log "Starting frontend on http://localhost:3000"
 ) &
 FRONTEND_PID=$!
 
-log "Financial OS is running"
-log "  Frontend: http://localhost:3000"
-log "  Backend:  http://localhost:8000"
+log "Financial OS is running (hot reload enabled)"
+log "  Frontend: http://localhost:3000  (Next.js Fast Refresh)"
+log "  Backend:  http://localhost:8000  (Uvicorn --reload)"
 log "  API docs: http://localhost:8000/docs"
 log "Press Ctrl+C to stop frontend and backend (Postgres keeps running)"
 
